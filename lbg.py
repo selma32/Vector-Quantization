@@ -1,51 +1,73 @@
 """
-lbg.py  --  OWNER: Member A
-Codebook generation using the LBG algorithm with splitting (Lecture 8).
-
 Conventions (shared by everyone):
-  - blocks   : NumPy array of shape (N, bh*bw), each row is one flattened block
-  - codebook : NumPy array of shape (k, bh*bw)
-  - indices  : NumPy array of shape (N,), integers from 0 to k-1
+- blocks   : NumPy array of shape (N, bh*bw), each row is one flattened block
+- codebook : NumPy array of shape (k, bh*bw)
+- indices  : NumPy array of shape (N,), integers from 0 to k-1
 """
 import numpy as np
 
 
 def distance(block, codeword):
-    """TODO: return the distance between one block and one codeword.
-    - Decide on the measure and document it (the lecture example uses
-      the sum of absolute differences)."""
-    raise NotImplementedError
+    block = np.asarray(block, dtype=np.float64)
+    codeword = np.asarray(codeword, dtype=np.float64)
 
+    return np.abs(block - codeword).sum()
 
+  
 def nearest_index(blocks, codebook):
-    """TODO: return indices (N,) = index of the closest codeword for every block.
-    - On a tie, pick the first codeword (as in the lecture)."""
-    raise NotImplementedError
+    blocks = np.asarray(blocks, dtype=np.float64)
+    codebook = np.asarray(codebook, dtype=np.float64)
+
+    d = np.abs(blocks[:, None, :] - codebook[None, :, :]).sum(axis=2)
+    return d.argmin(axis=1)
+
 
 
 def recompute_centroids(blocks, indices, codebook):
-    """TODO: return new_codebook = average of the blocks assigned to each codeword.
-    - Decide what to do with an EMPTY cluster (no blocks assigned) and
-      document it."""
-    raise NotImplementedError
+    new_codebook = codebook.copy()
+
+    for j in range(len(codebook)):
+        members = blocks[indices == j]
+        if len(members) > 0:
+            new_codebook[j] = members.mean(axis=0)
+
+    return new_codebook
 
 
 def split_codeword(codeword):
-    """TODO: return (codeword_low, codeword_high) from one codeword.
-    - Use the lecture rule (rounded average, +/- 1 offset)."""
-    raise NotImplementedError
+    return codeword - 1, codeword + 1
 
 
 def build_codebook(blocks, k):
-    """TODO: return codebook (k, bh*bw).
-    Steps:
-      1. Start with one codeword = average of all blocks.
-      2. Split every codeword into two.
-      3. Assign blocks to nearest codeword, recompute centroids,
-         repeat until the assignments stop changing.
-      4. Repeat from step 2 until the codebook has k codewords.
-    Edge cases to handle:
-      - k that is not a power of 2
-      - k larger than the number of blocks
-    """
-    raise NotImplementedError
+    blocks = np.asarray(blocks, dtype=np.float64)
+    k = min(k, len(blocks))
+
+    # 1- One codeword = average of all blocks.
+    codebook = blocks.mean(axis=0, keepdims=True)
+
+
+    while len(codebook) < k:
+        # 2- Split every codeword into two.
+        new = []
+        for c in codebook:
+            a, b = split_codeword(c)
+            new.append(a)
+            new.append(b)
+        codebook = np.array(new)
+
+        # 3- Assign blocks to nearest codeword, recompute centroids,
+        last = None
+        while True:
+            indices = nearest_index(blocks, codebook)
+
+            if last is not None and np.array_equal(indices, last):
+                break
+
+            last = indices
+            codebook = recompute_centroids(blocks, indices, codebook)
+            
+            if len(codebook) < k:
+                break
+
+    codebook = codebook[:k]
+    return np.round(codebook).astype(np.uint8)
