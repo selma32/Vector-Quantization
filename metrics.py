@@ -1,24 +1,28 @@
-"""
-metrics.py  --  OWNER: Member C
-Compression ratio and error measurement (same method as Lecture 8).
-"""
 import numpy as np
 
-
 def bits_per_index(k):
-    """TODO: return ceil(log2(k))."""
-    raise NotImplementedError
+    k = int(k)
+    if k < 1:
+        raise ValueError("k must be more than one")
+    #bits/label = ceil(log2(k));
+    return (k - 1).bit_length()          
 
 
 def compression_ratio(h, w, bh, bw, k):
-    """TODO: return (ratio, original_bits, compressed_bits).
-    - original   = h * w * 8
-    - compressed = codebook bits + (number of blocks * bits per index)
-    - ratio      = original / compressed
-    - Decide whether padded size and header bytes are counted; document it."""
-    raise NotImplementedError
+    if min(h, w, bh, bw) < 1:
+        raise ValueError("sizes must be more than one")
+    # Padded grid using ceil division
+    n_blocks = -(-h // bh) * -(-w // bw)             
+    original_bits = h * w * 8
+    codebook_bits = k * bh * bw * 8
+    labels_bits = n_blocks * bits_per_index(k)
+    compressed_bits = codebook_bits + labels_bits
+    return original_bits / compressed_bits, original_bits, compressed_bits
 
 
 def mse(original, reconstructed):
-    """TODO: return the mean squared error between the two images."""
-    raise NotImplementedError
+    a = np.asarray(original, dtype=np.float64)
+    b = np.asarray(reconstructed, dtype=np.float64)
+    if a.shape != b.shape:
+        raise ValueError(f"shape mismatch: {a.shape} vs {b.shape}")
+    return float(np.mean((a - b) ** 2))
