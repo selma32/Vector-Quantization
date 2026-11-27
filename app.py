@@ -100,6 +100,7 @@ def main():
                 out_name = "reconstructed.png"
             reconstructed_dir = os.path.join(base_dir, "reconstructed")
             os.makedirs(reconstructed_dir, exist_ok=True)
+
             out_path = os.path.join(reconstructed_dir, out_name)
 
             try:
@@ -108,7 +109,7 @@ def main():
                 print(f"\nReconstructed image saved to {out_path}")
 
                 with Image.open(original_path) as img:
-                original_array = np.array(img.convert("L"))
+                    original_array = np.array(img.convert("L"))
 
                 with Image.open(out_path) as img:
                     reconstructed_array = np.array(img)
