@@ -55,16 +55,17 @@ def main():
             os.makedirs(out_dir, exist_ok=True)
 
             try:
-                compress(path, bh, bw, k, out_dir)
-                ratio, original_bits, compressed_bits = compression_ratio(
-                    h, w, bh, bw, k
-                )
+                stats = compress(path, bh, bw, k, out_dir)
+                ratio = stats["ratio"]
+                original_bits = stats["original_bits"]
+                compressed_bits = stats["compressed_bits"]
 
                 print("\n--- Compression done ---")
                 print(f"Original size    : {original_bits} bits")
                 print(f"Compressed size  : {compressed_bits} bits")
                 print(f"Compression ratio: {ratio:.2f} : 1")
                 print(f"Files saved in   : {out_dir}")
+                
 
             except Exception as e:
                 print(f"Compression failed: {e}")
@@ -99,7 +100,6 @@ def main():
                 out_name = "reconstructed.png"
             reconstructed_dir = os.path.join(base_dir, "reconstructed")
             os.makedirs(reconstructed_dir, exist_ok=True)
-
             out_path = os.path.join(reconstructed_dir, out_name)
 
             try:
@@ -108,7 +108,7 @@ def main():
                 print(f"\nReconstructed image saved to {out_path}")
 
                 with Image.open(original_path) as img:
-                    original_array = np.array(img)
+                original_array = np.array(img.convert("L"))
 
                 with Image.open(out_path) as img:
                     reconstructed_array = np.array(img)
